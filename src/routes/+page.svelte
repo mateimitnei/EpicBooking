@@ -2,18 +2,38 @@
 	import Modal from './Modal.svelte';
 	import Button from './Button.svelte';
 	import DateButton from './DateButton.svelte';
+	import days from '../data.json';
 
 	let showModal = false;
-	let numOfPeople = ''; // Default to a valid number
-	let name = ''
+	let numOfPeople = '';
+	let name = '';
+	let stage = 1;
+	let error = '';
+	let selectedDate = '';
+	let selectedPrice = 0;
 
 	let toggleModal = () => {
 		showModal = !showModal;
+		stage = 1;
+	};
+	let nextModal = () => {
+		if (name === '' || numOfPeople === '') {
+			error = 'Ups... Completează tot!';
+			return;
+		}
+		stage = 2;
+		error = '';
+	};
+	let openModal = (date = '', price = 0) => {
+		selectedDate = date;
+		selectedPrice = price;
+		erase();
 	};
 	let erase = () => {
 		toggleModal();
 		numOfPeople = '';
 		name = '';
+		error = '';
 	};
 	let handleInput = ({ target }) => {
 		const value = target.value;
@@ -24,20 +44,33 @@
 </script>
 
 <Modal {showModal} on:click={toggleModal}>
-	<p class="text-xl mb-3">Make a reservation</p>
-	<form>
-		<input type="text" bind:value={name} placeholder='Name' class="mb-4 rounded-lg w-full">
-		<input type="number" bind:value={numOfPeople} placeholder='Number of people' class="mb-8 rounded-lg w-full" on:input={handleInput}>
-	</form>
-	<Button text="Cancel" cancel={true} on:click={erase}></Button>
-	<Button text="Next" cancel={false} on:click={toggleModal}></Button>
+	{#if stage === 1}
+		<p class="text-xl mb-4">Fă o rezervare</p>
+		<form>
+			<input type="text" bind:value={name} placeholder='Numele tău întreg' class="mb-4 rounded-xl w-full">
+			<input type="number" bind:value={numOfPeople} placeholder='Numărul de locuri' class="mb-4 rounded-xl w-full"
+						 on:input={handleInput}>
+		</form>
+		{#if error}
+		{/if}
+		<p class="text-red-500">{error}</p>
+		<Button text="Renunță" cancel={true} on:click={erase}></Button>
+		<Button text="Mai departe" cancel={false} on:click={nextModal}></Button>
+	{/if}
+	{#if stage === 2}
+		<p class="text-xl mb-7">Reservation by {name} for {numOfPeople} people:</p>
+		<p class="text-xl mb-3 bg-sky-50 text-sky-800 rounded-xl p-2">Date: {selectedDate}</p>
+		<p class="font-bold text-xl mb-3 bg-sky-50 text-sky-800 rounded-xl p-2">Total price: {numOfPeople * selectedPrice} RON</p>
+		<Button text="Renunță" cancel={true} on:click={erase}></Button>
+		<Button text="Plătește" cancel={false} on:click={toggleModal}></Button>
+	{/if}
 </Modal>
 
 <main>
-	<div class="flex justify-center mt-60 bg-sky-700 w-fit m-auto rounded-3xl px-3">
-		<DateButton text="02/01/2025" cancel={false} on:click={toggleModal}></DateButton>
-		<DateButton text="03/01/2025" cancel={false} on:click={toggleModal}></DateButton>
-		<DateButton text="18/02/2025" cancel={false} on:click={toggleModal}></DateButton>
-		<DateButton text="19/02/2025" cancel={false} on:click={toggleModal}></DateButton>
+	<h1 class="bg-sky-600 text-sky-200 text-4xl text-center p-5">Calendarul evenimentului</h1>
+	<div class="grid grid-cols-2 w-96 justify-center mt-40 m-auto rounded-3xl p-3 border-8 border-sky-200 border-t-sky-600">
+		{#each days as day}
+			<DateButton date={day.date} price={day.price} cancel={false} on:click={() => openModal(day.date, day.price)}></DateButton>
+		{/each}
 	</div>
 </main>
